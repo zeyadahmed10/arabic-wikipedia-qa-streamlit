@@ -22,11 +22,19 @@ os.environ["TOKENIZERS_PARALLELISM"] = "false"
 
 preprocessor = ArabertPreprocessor("wissamantoun/araelectra-base-artydiqa")
 logger.info("Loading Pipeline...")
-tokenizer = AutoTokenizer.from_pretrained("wissamantoun/araelectra-base-artydiqa")
-qa_pipe = pipeline("question-answering", model="wissamantoun/araelectra-base-artydiqa")
+tokenizer = AutoTokenizer.from_pretrained("pretrained", do_lower_case = False)
+qa_pipe = pipeline("question-answering", model="pretrained")
+cls_pipe = pipeline('text-classification', model="pretrainedcls", return_all_scores=True)
+#cls_pip = pipeline("")
 logger.info("Finished loading Pipeline...")
-
-
+def delete_multiple_element(list_object, indices):
+    indices = sorted(indices, reverse=True)
+    for idx in indices:
+        if idx < len(list_object):
+            list_object.pop(idx)
+def find_unanswered_questions(cls_result):
+    for i in range(len(cls_result)):
+        if cls_result[i][]
 @lru_cache(maxsize=100)
 def get_results(question):
     logger.info("\n=================================================================")
@@ -110,7 +118,11 @@ def get_results(question):
         question=[preprocessor.preprocess(question)] * len(full_len_sections),
         context=[preprocessor.preprocess(x) for x in full_len_sections],
     )
-
+    cls_results = cls_pipe(
+        [{'text':x, 'text_pair':y} for x,y in zip([question]*len(full_len_sections), full_len_sections)]
+    )
+    if not isinstance(cls_results, list):
+        cls_results = [cls_results]
     if not isinstance(results, list):
         results = [results]
 
@@ -150,7 +162,56 @@ def get_results(question):
     reader_time.stop()
     logger.info(f"Total time spent: {reader_time.last + search_timer.last}")
     return return_dict
+def splitter(question, text, tokenizer, split_size, overlap_size):
+  samples = []
+  start = 0
+  text_splited = text.split(" ")
+  print(len(tokenizer(text)['input_ids']))
+  if len(tokenizer(question, text)['input_ids'])<384:
+    return [text]
+  while(start< len(text_splited)):
+    curr_section  = " ".join(text_splited[start:start+split_size])
+    start = start +split_size - overlap_size
+    samples.append(curr_section)
+  return samples  
+@lru_cache(100)
+def get_offline_results(question, doc):
+    max_length = 384 # The maximum length of a feature (question and context)
+    doc_stride = 128 # The authorized overlap between two part of the context when splitting it is needed.
+    samples = splitter(question, doc,tokenizer, max_length, doc_stride)
+    results = qa_pipe(
+        question=[preprocessor.preprocess(question)] * len(samples),
+        context=[preprocessor.preprocess(x) for x in samples],
+    )
 
+    if not isinstance(results, list):
+        results = [results]
+
+
+    for result, section in zip(results, samples):
+        result["original"] = section
+        answer_match = find_near_matches(
+            " " + preprocessor.unpreprocess(result["answer"]) + " ",
+            result["original"],
+            max_l_dist=min(5, len(preprocessor.unpreprocess(result["answer"])) // 2),
+            max_deletions=0,
+        )
+        try:
+            result["new_start"] = answer_match[0].start
+            result["new_end"] = answer_match[0].end
+            result["new_answer"] = answer_match[0].matched
+        except:
+            result["new_start"] = result["start"]
+            result["new_end"] = result["end"]
+            result["new_answer"] = result["answer"]
+            result["original"] = preprocessor.preprocess(result["original"])
+        logger.info(f"Answers: {preprocessor.preprocess(result['new_answer'])}")
+
+    sorted_results = sorted(results, reverse=True, key=lambda x: x["score"])
+
+    return_dict = {}
+    return_dict["results"] = sorted_results
+    return return_dict
 
 def shorten_text(text, n, reverse=False):
     if text.isspace() or text == "":
