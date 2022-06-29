@@ -39,9 +39,10 @@ p, div, input, label {
 )
 
 st.sidebar.header("Info")
-st.sidebar.write("Made by [Wissam Antoun](https://twitter.com/wissam_antoun)")
+#st.sidebar.write("Made by [Zeyad Ahmed](https://www.linkedin.com/in/zeyadahmed1/)")
 st.sidebar.image("AraELECTRA.png", width=150)
-st.sidebar.write("Powered by [AraELECTRA](https://github.com/aub-mind/arabert)")
+st.sidebar.write("Powered by [AraELECTRA-ASQuADv2.0](https://github.com/aub-mind/arabert)")
+st.sidebar.write("Trained on [ASQuADv2.0](https://www.linkedin.com/in/zeyadahmed1/)")
 st.sidebar.write(
     "Source Code [GitHub](https://github.com/WissamAntoun/arabic-wikipedia-qa-streamlit)"
 )
@@ -81,6 +82,7 @@ if run_query:
         for result in results_dict["results"][:n_answers]:
             annotate_answer(result)
             if not offline_flag:
+                f"confidence {(1-result['conf']):.2f}"
                 f"[**المصدر**](<{result['link']}>)"
     else:
         st.write("## 😞 ليس لدي جواب")
