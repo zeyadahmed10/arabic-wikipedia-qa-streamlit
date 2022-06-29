@@ -24,7 +24,7 @@ preprocessor = ArabertPreprocessor("wissamantoun/araelectra-base-artydiqa")
 logger.info("Loading Pipeline...")
 tokenizer = AutoTokenizer.from_pretrained("pretrained", do_lower_case = False)
 qa_pipe = pipeline("question-answering", model="pretrained")
-cls_pipe = pipeline('text-classification', model="pretrainedcls", return_all_scores=True)
+cls_pipe = pipeline('text-classification', model="pretrainedcls")
 #cls_pip = pipeline("")
 logger.info("Finished loading Pipeline...")
 def delete_multiple_element(list_object, indices):
@@ -32,15 +32,23 @@ def delete_multiple_element(list_object, indices):
     for idx in indices:
         if idx < len(list_object):
             list_object.pop(idx)
-def find_unanswered_questions(cls_result):
+def find_unanswered_questions(cls_result, threshold):
+    indcies = list()
     for i in range(len(cls_result)):
-        if cls_result[i][]
+        if cls_result[i]['label'] == 'LABEL_0':
+            conf = 1-cls_result[i]['score'] 
+        else:
+            conf = cls_result[i]['score']
+        if conf >threshold:
+            indcies.append(i)
+    return indcies
+        
 @lru_cache(maxsize=100)
 def get_results(question):
     logger.info("\n=================================================================")
     logger.info(f"Question: {question}")
 
-    if "وسام أنطون" in question or "wissam antoun" in question.lower():
+    if "زياد احمد" in question or "زياد أحمد" in question or "zeyad ahmed" in question.lower():
         return {
             "title": "Creator",
             "results": [
@@ -50,7 +58,7 @@ def get_results(question):
                     "new_end": 12,
                     "new_answer": "My Creator 😜",
                     "original": "My Creator 😜",
-                    "link": "https://github.com/WissamAntoun/",
+                    "link": "https://www.linkedin.com/in/zeyadahmed1/",
                 }
             ],
         }
@@ -176,6 +184,20 @@ def splitter(question, text, tokenizer, split_size, overlap_size):
   return samples  
 @lru_cache(100)
 def get_offline_results(question, doc):
+    if "زياد احمد" in question or "زياد أحمد" in question or "zeyad ahmed" in question.lower():
+        return {
+            "title": "Creator",
+            "results": [
+                {
+                    "score": 1.0,
+                    "new_start": 0,
+                    "new_end": 12,
+                    "new_answer": "My Creator 😜",
+                    "original": "My Creator 😜",
+                    "link": "https://www.linkedin.com/in/zeyadahmed1/",
+                }
+            ],
+        }
     max_length = 384 # The maximum length of a feature (question and context)
     doc_stride = 128 # The authorized overlap between two part of the context when splitting it is needed.
     samples = splitter(question, doc,tokenizer, max_length, doc_stride)
