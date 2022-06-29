@@ -1,3 +1,4 @@
+from ctypes import resize
 from urllib.parse import unquote
 
 import arabic_reshaper
@@ -41,10 +42,10 @@ p, div, input, label {
 st.sidebar.header("Info")
 #st.sidebar.write("Made by [Zeyad Ahmed](https://www.linkedin.com/in/zeyadahmed1/)")
 st.sidebar.image("AraELECTRA.png", width=150)
-st.sidebar.write("Powered by [AraELECTRA-ASQuADv2.0](https://github.com/aub-mind/arabert)")
-st.sidebar.write("Trained on [ASQuADv2.0](https://www.linkedin.com/in/zeyadahmed1/)")
+st.sidebar.write("Powered by [AraELECTRA-ASQuADv2.0](https://huggingface.co/ZeyadAhmed/AraElectra-ASQuADv2-QA)")
+st.sidebar.write("Trained on [ASQuADv2.0](https://huggingface.co/datasets/ZeyadAhmed/ASQuADv2.0)")
 st.sidebar.write(
-    "Source Code [GitHub](https://github.com/WissamAntoun/arabic-wikipedia-qa-streamlit)"
+    "Source Code [GitHub](https://github.com/zeyadahmed10/arabic-wikipedia-qa-streamlit)"
 )
 st.sidebar.write("\n")
 n_answers = st.sidebar.slider(
@@ -81,8 +82,13 @@ if run_query:
         st.write("## :الأجابات هي")
         for result in results_dict["results"][:n_answers]:
             annotate_answer(result)
+            x = f"{(1-result['conf']):.2f}"
+            new_title = f'<p style="font-family:sans-serif; color:#990000; font-size: 18px;">السؤال يمكن إجابته بنسبة: {x}</p>'
+            st.markdown(new_title, unsafe_allow_html=True)
             if not offline_flag:
-                f"confidence {(1-result['conf']):.2f}"
+                x = f"{(1-result['conf']):.2f}"
+                new_title = f'<p style="font-family:sans-serif; color:#990000; font-size: 18px;">السؤال يمكن إجابته بنسبة: {x}</p>'
+                st.markdown(new_title, unsafe_allow_html=True)
                 f"[**المصدر**](<{result['link']}>)"
     else:
         st.write("## 😞 ليس لدي جواب")
