@@ -22,8 +22,9 @@ os.environ["TOKENIZERS_PARALLELISM"] = "false"
 
 preprocessor = ArabertPreprocessor("wissamantoun/araelectra-base-artydiqa")
 logger.info("Loading Pipeline...")
-tokenizer = AutoTokenizer.from_pretrained("pretrained", do_lower_case = False)
+tokenizer = AutoTokenizer.from_pretrained("pretrainedcls", do_lower_case = False)
 qa_pipe = pipeline("question-answering", model="pretrained")
+tokenizer_kwargs = {'truncation':True,'max_length':512}
 cls_pipe = pipeline('text-classification', model="pretrainedcls")
 #cls_pip = pipeline("")
 logger.info("Finished loading Pipeline...")
@@ -35,14 +36,23 @@ def delete_multiple_element(list_object, indices):
 def find_unanswered_questions(cls_result, threshold):
     indcies = list()
     for i in range(len(cls_result)):
+        conf = None
         if cls_result[i]['label'] == 'LABEL_0':
-            conf = 1-cls_result[i]['score'] 
+            conf = 1-cls_result[i]['conf']
+            cls_result[i]['conf'] = conf 
         else:
-            conf = cls_result[i]['score']
+            conf = cls_result[i]['conf']
+        print(conf)
         if conf >threshold:
             indcies.append(i)
     return indcies
-        
+def concatenate_dict(results, cls_results):
+    for i in range(len(cls_results)):
+        conf = cls_results[i]['score']
+        del cls_results[i]['score']
+        cls_results[i]['conf'] = conf
+        results[i].update(cls_results[i])
+    return results      
 @lru_cache(maxsize=100)
 def get_results(question):
     logger.info("\n=================================================================")
@@ -122,12 +132,14 @@ def get_results(question):
 
     reader_time = Timer("electra", text="Reader Time: {:.2f}", logger=logging.info)
     reader_time.start()
+    questions=[preprocessor.preprocess(question)] * len(full_len_sections)
+    contexts=[preprocessor.preprocess(x) for x in full_len_sections]
     results = qa_pipe(
-        question=[preprocessor.preprocess(question)] * len(full_len_sections),
-        context=[preprocessor.preprocess(x) for x in full_len_sections],
+        question = questions,
+        context = contexts
     )
     cls_results = cls_pipe(
-        [{'text':x, 'text_pair':y} for x,y in zip([question]*len(full_len_sections), full_len_sections)]
+        [{'text':x, 'text_pair':y} for x, y in zip(questions, contexts)],**tokenizer_kwargs
     )
     if not isinstance(cls_results, list):
         cls_results = [cls_results]
@@ -160,7 +172,12 @@ def get_results(question):
             result["original"] = preprocessor.preprocess(result["original"])
             result["link"] = search_results[0].link
         logger.info(f"Answers: {preprocessor.preprocess(result['new_answer'])}")
-
+    results = concatenate_dict(results, cls_results)
+    print(len(results))
+    indcies = find_unanswered_questions(results, 0.5)
+    delete_multiple_element(results, indcies)
+    print(len(results),len(indcies))
+    print('alo')
     sorted_results = sorted(results, reverse=True, key=lambda x: x["score"])
 
     return_dict = {}
@@ -179,7 +196,15 @@ def splitter(question, text, tokenizer, split_size, overlap_size):
     return [text]
   while(start< len(text_splited)):
     curr_section  = " ".join(text_splited[start:start+split_size])
-    start = start +split_size - overlap_size
+    end = start+split_size
+    while(len(tokenizer(question, curr_section)['input_ids'])>384):
+        end = end -10
+        curr_section  = " ".join(text_splited[start:end])
+        flag = True
+    if flag == True:
+        start = end-overlap_size
+    else:
+        start = start +split_size - overlap_size
     samples.append(curr_section)
   return samples  
 @lru_cache(100)
@@ -201,14 +226,19 @@ def get_offline_results(question, doc):
     max_length = 384 # The maximum length of a feature (question and context)
     doc_stride = 128 # The authorized overlap between two part of the context when splitting it is needed.
     samples = splitter(question, doc,tokenizer, max_length, doc_stride)
+    questions=[preprocessor.preprocess(question)] * len(samples)
+    contexts=[preprocessor.preprocess(x) for x in samples]
     results = qa_pipe(
-        question=[preprocessor.preprocess(question)] * len(samples),
-        context=[preprocessor.preprocess(x) for x in samples],
+        question = questions,
+        context = contexts
     )
-
+    cls_results = cls_pipe(
+        [{'text':x, 'text_pair':y} for x, y in zip(questions, contexts)],**tokenizer_kwargs
+    )
+    if not isinstance(cls_results, list):
+        cls_results = [cls_results]
     if not isinstance(results, list):
         results = [results]
-
 
     for result, section in zip(results, samples):
         result["original"] = section
@@ -228,7 +258,9 @@ def get_offline_results(question, doc):
             result["new_answer"] = result["answer"]
             result["original"] = preprocessor.preprocess(result["original"])
         logger.info(f"Answers: {preprocessor.preprocess(result['new_answer'])}")
-
+    results = concatenate_dict(results, cls_results)
+    indcies = find_unanswered_questions(results, 0.5)
+    delete_multiple_element(results, indcies)
     sorted_results = sorted(results, reverse=True, key=lambda x: x["score"])
 
     return_dict = {}
