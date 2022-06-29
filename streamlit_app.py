@@ -81,14 +81,16 @@ if run_query:
     if len(results_dict) > 0:
         st.write("## :الأجابات هي")
         for result in results_dict["results"][:n_answers]:
-            annotate_answer(result)
-            x = f"{(1-result['conf']):.2f}"
-            new_title = f'<p style="font-family:sans-serif; color:#990000; font-size: 18px;">السؤال يمكن إجابته بنسبة: {x}</p>'
-            st.markdown(new_title, unsafe_allow_html=True)
             if not offline_flag:
+                annotate_answer(result)
                 x = f"{(1-result['conf']):.2f}"
                 new_title = f'<p style="font-family:sans-serif; color:#990000; font-size: 18px;">السؤال يمكن إجابته بنسبة: {x}</p>'
                 st.markdown(new_title, unsafe_allow_html=True)
                 f"[**المصدر**](<{result['link']}>)"
+            else:
+                annotate_answer(result)
+                x = f"{(1-result['conf']):.2f}"
+                new_title = f'<p style="font-family:sans-serif; color:#990000; font-size: 18px;">السؤال يمكن إجابته بنسبة: {x}</p>'
+                st.markdown(new_title, unsafe_allow_html=True)
     else:
         st.write("## 😞 ليس لدي جواب")
