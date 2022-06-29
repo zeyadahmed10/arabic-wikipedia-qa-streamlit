@@ -22,10 +22,10 @@ os.environ["TOKENIZERS_PARALLELISM"] = "false"
 
 preprocessor = ArabertPreprocessor("wissamantoun/araelectra-base-artydiqa")
 logger.info("Loading Pipeline...")
-tokenizer = AutoTokenizer.from_pretrained("pretrainedcls", do_lower_case = False)
-qa_pipe = pipeline("question-answering", model="pretrained")
+tokenizer = AutoTokenizer.from_pretrained("ZeyadAhmed/AraElectra-ASQuADv2-CLS", do_lower_case = False)
+qa_pipe = pipeline("question-answering", model="ZeyadAhmed/AraElectra-ASQuADv2-QA")
 tokenizer_kwargs = {'truncation':True,'max_length':512}
-cls_pipe = pipeline('text-classification', model="pretrainedcls")
+cls_pipe = pipeline('text-classification', model="ZeyadAhmed/AraElectra-ASQuADv2-CLS")
 #cls_pip = pipeline("")
 logger.info("Finished loading Pipeline...")
 def delete_multiple_element(list_object, indices):
