@@ -69,6 +69,7 @@ def get_results(question):
                     "new_answer": "My Creator 😜",
                     "original": "My Creator 😜",
                     "link": "https://www.linkedin.com/in/zeyadahmed1/",
+                    "conf": 0.0
                 }
             ],
         }
@@ -220,6 +221,7 @@ def get_offline_results(question, doc):
                     "new_answer": "My Creator 😜",
                     "original": "My Creator 😜",
                     "link": "https://www.linkedin.com/in/zeyadahmed1/",
+                    "conf": 0.0
                 }
             ],
         }
