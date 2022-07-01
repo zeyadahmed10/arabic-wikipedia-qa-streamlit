@@ -51,6 +51,9 @@ st.sidebar.write("\n")
 n_answers = st.sidebar.slider(
     "Max. number of answers", min_value=1, max_value=10, value=2, step=1
 )
+st.sidebar.write("\n")
+st.sidebar.write("\n")
+st.sidebar.write("Based on [Wissam Antoun Repo](https://github.com/WissamAntoun/arabic-wikipedia-qa-streamlit)")
 
 question = st.text_input("", value="من هو جو بايدن؟")
 if "؟" not in question:
