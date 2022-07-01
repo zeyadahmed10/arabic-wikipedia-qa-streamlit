@@ -8,4 +8,4 @@
 
 AraELECTRA powered Arabic Wikipedia QA system with Streamlit
 
-[![Open in Streamlit](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://zeyadahmed10-arabic-wikipedia-qa-streamlit-streamlit-app-vn31sv.streamlitapp.com/)
+[![Open in Streamlit](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://share.streamlit.io/zeyadahmed10/arabic-wikipedia-qa-streamlit/main/streamlit_app.py)
