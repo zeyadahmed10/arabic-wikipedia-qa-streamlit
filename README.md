@@ -6,6 +6,6 @@
 <b> Arabic QA <b>
 <p>
 
-AraELECTRA powered Arabic Wikipedia QA system with Streamlit
+AraELECTRA-Arabic-SQuADv2-QA/CLS powered Arabic Wikipedia QA system with Streamlit
 
 [![Open in Streamlit](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://share.streamlit.io/zeyadahmed10/arabic-wikipedia-qa-streamlit/main/streamlit_app.py)
